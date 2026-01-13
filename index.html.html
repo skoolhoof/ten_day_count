@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ten Day Count System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { createClient } = supabase;
+
+        // Initialize Supabase client
+        const supabaseClient = createClient(
+            'https://qaqakmkoywcjziyvkkhm.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhcWFrbWtveXdjanppeXZra2htIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwODI5MjYsImV4cCI6MjA4MzY1ODkyNn0.Xx0GAuzfWLWGxP17GRpkGBYczP5B-8cxpMG7DbTOVxo'
+        );
+
+        // Lucide icons as simple SVG components
+        const Users = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+        );
+
+        const FileText = ({ size = 18 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+            </svg>
+        );
+
+        const BarChart3 = ({ size = 18 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 3v18h18"/>
+                <path d="M18 17V9"/>
+                <path d="M13 17V5"/>
+                <path d="M8 17v-3"/>
+            </svg>
+        );
+
+        const Download = ({ size = 18 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+        );
+
+        const Trash2 = ({ size = 18 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                <line x1="10" y1="11" x2="10" y2="17"/>
+                <line x1="14" y1="11" x2="14" y2="17"/>
+            </svg>
+        );
+
+        const CheckCircle = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+        );
+
+        const RefreshCw = ({ size = 18 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="23 4 23 10 17 10"/>
+                <polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+        );
+
+        function TenDayCountSystem() {
+            const [view, setView] = useState('teacher');
+            const [teacherName, setTeacherName] = useState('');
+            const [grade, setGrade] = useState('');
+            const [countDay, setCountDay] = useState('1');
+            const [submissions, setSubmissions] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [saving, setSaving] = useState(false);
+            const [error, setError] = useState(null);
+            
+            const races = ['African', 'Coloured', 'Indian', 'White', 'Other'];
+            const languages = ['English', 'Afrikaans'];
+            const genders = ['Boys', 'Girls'];
+            const statuses = ['Present', 'Absent'];
+
+            const [counts, setCounts] = useState(() => {
+                const initial = {};
+                races.forEach(race => {
+                    languages.forEach(lang => {
+                        genders.forEach(gender => {
+                            statuses.forEach(status => {
+                                initial[`${race}-${lang}-${gender}-${status}`] = '';
+                            });
+                        });
+                    });
+                });
+                return initial;
+            });
+
+            useEffect(() => {
+                loadSubmissions();
+                
+                // Subscribe to real-time updates
+                const subscription = supabaseClient
+                    .channel('submissions_channel')
+                    .on('postgres_changes', 
+                        { event: '*', schema: 'public', table: 'submissions' },
+                        () => {
+                            loadSubmissions();
+                        }
+                    )
+                    .subscribe();
+
+                return () => {
+                    subscription.unsubscribe();
+                };
+            }, []);
+
+            const loadSubmissions = async () => {
+                try {
+                    setError(null);
+                    const { data, error } = await supabaseClient
+                        .from('submissions')
+                        .select('*')
+                        .order('timestamp', { ascending: false });
+                    
+                    if (error) throw error;
+                    setSubmissions(data || []);
+                } catch (err) {
+                    console.error('Error loading submissions:', err);
+                    setError('Failed to load submissions. Please refresh the page.');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleCountChange = (key, value) => {
+                const numValue = value === '' ? '' : Math.max(0, parseInt(value) || 0);
+                setCounts(prev => ({ ...prev, [key]: numValue }));
+            };
+
+            const handleSubmit = async () => {
+                if (!teacherName.trim() || !grade.trim()) {
+                    alert('Please enter teacher name and grade');
+                    return;
+                }
+
+                setSaving(true);
+                setError(null);
+
+                try {
+                    const { error } = await supabaseClient
+                        .from('submissions')
+                        .insert([{
+                            teacher_name: teacherName.trim(),
+                            grade: grade.trim(),
+                            count_day: parseInt(countDay),
+                            counts: counts
+                        }]);
+                    
+                    if (error) throw error;
+                    
+                    // Reset form
+                    setTeacherName('');
+                    setGrade('');
+                    setCountDay('1');
+                    setCounts(() => {
+                        const initial = {};
+                        races.forEach(race => {
+                            languages.forEach(lang => {
+                                genders.forEach(gender => {
+                                    statuses.forEach(status => {
+                                        initial[`${race}-${lang}-${gender}-${status}`] = '';
+                                    });
+                                });
+                            });
+                        });
+                        return initial;
+                    });
+                    
+                    alert('Form submitted successfully!');
+                    await loadSubmissions();
+                } catch (err) {
+                    console.error('Error saving submission:', err);
+                    setError('Failed to save submission. Please try again.');
+                    alert('Error saving submission. Please try again.');
+                } finally {
+                    setSaving(false);
+                }
+            };
+
+            const deleteSubmission = async (id) => {
+                if (!confirm('Are you sure you want to delete this submission?')) return;
+                
+                try {
+                    const { error } = await supabaseClient
+                        .from('submissions')
+                        .delete()
+                        .eq('id', id);
+                    
+                    if (error) throw error;
+                    await loadSubmissions();
+                } catch (err) {
+                    console.error('Error deleting submission:', err);
+                    alert('Error deleting submission. Please try again.');
+                }
+            };
+
+            const calculateSummary = () => {
+                const summary = {};
+                
+                races.forEach(race => {
+                    languages.forEach(lang => {
+                        genders.forEach(gender => {
+                            statuses.forEach(status => {
+                                const key = `${race}-${lang}-${gender}-${status}`;
+                                summary[key] = 0;
+                            });
+                        });
+                    });
+                });
+
+                submissions.forEach(sub => {
+                    Object.keys(sub.counts).forEach(key => {
+                        const value = parseInt(sub.counts[key]) || 0;
+                        summary[key] = (summary[key] || 0) + value;
+                    });
+                });
+
+                return summary;
+            };
+
+            const exportToCSV = () => {
+                const summary = calculateSummary();
+                let csv = 'Race,Language,Gender,Status,Total Count\n';
+                
+                races.forEach(race => {
+                    languages.forEach(lang => {
+                        genders.forEach(gender => {
+                            statuses.forEach(status => {
+                                const key = `${race}-${lang}-${gender}-${status}`;
+                                csv += `${race},${lang},${gender},${status},${summary[key] || 0}\n`;
+                            });
+                        });
+                    });
+                });
+
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `ten-day-count-summary-${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+            };
+
+            if (loading) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+                        <div className="text-lg text-gray-700">Loading submissions...</div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
+                                    <Users />
+                                    Ten Day Count System
+                                </h1>
+                                <button
+                                    onClick={loadSubmissions}
+                                    className="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors flex items-center gap-2"
+                                    title="Refresh data"
+                                >
+                                    <RefreshCw size={16} />
+                                    Refresh
+                                </button>
+                            </div>
+                            
+                            {error && (
+                                <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+                                    {error}
+                                </div>
+                            )}
+                            
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setView('teacher')}
+                                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                        view === 'teacher'
+                                            ? 'bg-indigo-600 text-white'
+                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                    }`}
+                                >
+                                    <span className="inline-flex items-center gap-2">
+                                        <FileText />
+                                        Teacher Form
+                                    </span>
+                                </button>
+                                <button
+                                    onClick={() => setView('principal')}
+                                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                        view === 'principal'
+                                            ? 'bg-indigo-600 text-white'
+                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                    }`}
+                                >
+                                    <span className="inline-flex items-center gap-2">
+                                        <BarChart3 />
+                                        Principal Dashboard
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {view === 'teacher' && (
+                            <div className="bg-white rounded-lg shadow-lg p-6">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-4">Daily Count Form</h2>
+                                
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Teacher Name
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={teacherName}
+                                                onChange={(e) => setTeacherName(e.target.value)}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Grade
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={grade}
+                                                onChange={(e) => setGrade(e.target.value)}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                                placeholder="e.g., Grade 5A"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Count Day
+                                            </label>
+                                            <select
+                                                value={countDay}
+                                                onChange={(e) => setCountDay(e.target.value)}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                            >
+                                                {[1,2,3,4,5,6,7,8,9,10].map(day => (
+                                                    <option key={day} value={day}>Day {day}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full border-collapse">
+                                            <thead>
+                                                <tr className="bg-indigo-600 text-white">
+                                                    <th className="border border-indigo-500 p-2">Race</th>
+                                                    <th className="border border-indigo-500 p-2">Language</th>
+                                                    <th className="border border-indigo-500 p-2">Gender</th>
+                                                    <th className="border border-indigo-500 p-2">Present</th>
+                                                    <th className="border border-indigo-500 p-2">Absent</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {races.map(race => 
+                                                    languages.map(lang => 
+                                                        genders.map((gender, idx) => (
+                                                            <tr key={`${race}-${lang}-${gender}`} className="hover:bg-gray-50">
+                                                                {idx === 0 && (
+                                                                    <>
+                                                                        <td rowSpan={2} className="border border-gray-300 p-2 text-center font-medium">
+                                                                            {race}
+                                                                        </td>
+                                                                        <td rowSpan={2} className="border border-gray-300 p-2 text-center">
+                                                                            {lang}
+                                                                        </td>
+                                                                    </>
+                                                                )}
+                                                                <td className="border border-gray-300 p-2 text-center">{gender}</td>
+                                                                <td className="border border-gray-300 p-2">
+                                                                    <input
+                                                                        type="number"
+                                                                        min="0"
+                                                                        value={counts[`${race}-${lang}-${gender}-Present`]}
+                                                                        onChange={(e) => handleCountChange(`${race}-${lang}-${gender}-Present`, e.target.value)}
+                                                                        className="w-full px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-indigo-500"
+                                                                    />
+                                                                </td>
+                                                                <td className="border border-gray-300 p-2">
+                                                                    <input
+                                                                        type="number"
+                                                                        min="0"
+                                                                        value={counts[`${race}-${lang}-${gender}-Absent`]}
+                                                                        onChange={(e) => handleCountChange(`${race}-${lang}-${gender}-Absent`, e.target.value)}
+                                                                        className="w-full px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-indigo-500"
+                                                                    />
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    )
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <button
+                                        onClick={handleSubmit}
+                                        disabled={saving}
+                                        className="mt-6 w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
+                                    >
+                                        <CheckCircle />
+                                        {saving ? 'Submitting...' : 'Submit Count'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {view === 'principal' && (
+                            <div className="space-y-6">
+                                <div className="bg-white rounded-lg shadow-lg p-6">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h2 className="text-2xl font-bold text-gray-800">Summary Report</h2>
+                                        <button
+                                            onClick={exportToCSV}
+                                            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                                        >
+                                            <Download />
+                                            Export CSV
+                                        </button>
+                                    </div>
+
+                                    <div className="mb-4 p-4 bg-indigo-50 rounded-lg">
+                                        <p className="text-sm text-gray-700">
+                                            <strong>Total Submissions:</strong> {submissions.length}
+                                        </p>
+                                    </div>
+
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full border-collapse">
+                                            <thead>
+                                                <tr className="bg-indigo-600 text-white">
+                                                    <th className="border border-indigo-500 p-2">Race</th>
+                                                    <th className="border border-indigo-500 p-2">Language</th>
+                                                    <th className="border border-indigo-500 p-2">Gender</th>
+                                                    <th className="border border-indigo-500 p-2">Present</th>
+                                                    <th className="border border-indigo-500 p-2">Absent</th>
+                                                    <th className="border border-indigo-500 p-2">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {(() => {
+                                                    const summary = calculateSummary();
+                                                    return races.map(race => 
+                                                        languages.map(lang => 
+                                                            genders.map((gender, idx) => {
+                                                                const presentKey = `${race}-${lang}-${gender}-Present`;
+                                                                const absentKey = `${race}-${lang}-${gender}-Absent`;
+                                                                const present = summary[presentKey] || 0;
+                                                                const absent = summary[absentKey] || 0;
+                                                                const total = present + absent;
+                                                                
+                                                                return (
+                                                                    <tr key={`${race}-${lang}-${gender}`} className="hover:bg-gray-50">
+                                                                        {idx === 0 && (
+                                                                            <>
+                                                                                <td rowSpan={2} className="border border-gray-300 p-2 text-center font-medium">
+                                                                                    {race}
+                                                                                </td>
+                                                                                <td rowSpan={2} className="border border-gray-300 p-2 text-center">
+                                                                                    {lang}
+                                                                                </td>
+                                                                            </>
+                                                                        )}
+                                                                        <td className="border border-gray-300 p-2 text-center">{gender}</td>
+                                                                        <td className="border border-gray-300 p-2 text-center font-semibold text-green-600">
+                                                                            {present}
+                                                                        </td>
+                                                                        <td className="border border-gray-300 p-2 text-center font-semibold text-red-600">
+                                                                            {absent}
+                                                                        </td>
+                                                                        <td className="border border-gray-300 p-2 text-center font-bold">
+                                                                            {total}
+                                                                        </td>
+                                                                    </tr>
+                                                                );
+                                                            })
+                                                        )
+                                                    );
+                                                })()}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white rounded-lg shadow-lg p-6">
+                                    <h3 className="text-xl font-bold text-gray-800 mb-4">Individual Submissions</h3>
+                                    
+                                    {submissions.length === 0 ? (
+                                        <p className="text-gray-500 text-center py-8">No submissions yet</p>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {submissions.map(sub => (
+                                                <div key={sub.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <div>
+                                                            <p className="font-semibold text-gray-800">{sub.teacher_name} - {sub.grade}</p>
+                                                            <p className="text-sm text-gray-600">
+                                                                Day {sub.count_day} • {new Date(sub.timestamp).toLocaleString()}
+                                                            </p>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => deleteSubmission(sub.id)}
+                                                            className="text-red-600 hover:text-red-800 transition-colors"
+                                                        >
+                                                            <Trash2 />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<TenDayCountSystem />, document.getElementById('root'));
+    </script>
+</body>
+</html>
